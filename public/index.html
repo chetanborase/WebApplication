@@ -1,0 +1,98 @@
+<html lang="">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Upload Files</title>
+</head>
+
+<body>
+<h2>File Upload</h2>
+Select file
+<input type="file" id="filename"/>
+<br>
+<input type="button" value="Connect" onclick="connectChatServer()"/>
+<br>
+<input type="button" value="Cancel" onclick="cancel()"/>
+<br><br>
+<input type="button" value="Upload" onclick="sendFile()"/>
+
+
+<br>
+<br>
+Output
+<br>
+<pre id="output"></pre>
+
+</body>
+
+
+</html>
+
+
+<script>
+    var ws;
+    var output = document.getElementById("output");
+
+    function cancel() {
+        ws.send("cancel")
+    }
+
+    function saveFile(filename, typedArray) {
+        var byteArray = new Uint8Array(typedArray);
+        var blob = new Blob([byteArray], {type: "octet/stream"});
+        var blobURL = URL.createObjectURL(blob);
+
+        var a = window.document.createElement('a');
+        a.href = blobURL;
+        a.download = filename;
+        a.text = "Download Response xlsx File"
+        document.body.appendChild(a);
+    }
+
+    function NewTransaction() {
+
+    }
+
+    function connectChatServer() {
+        ws = new WebSocket("ws://localhost:8080/batch/accounts/abcxyz");
+        ws.binaryType = "arraybuffer";
+        ws.onopen = function () {
+            alert("Connected.")
+        };
+
+        ws.onmessage = function (evt) {
+            if (typeof evt.data == "object") {
+                saveFile("fileName.xlsx", evt.data);
+            } else {
+                output.innerHTML = "Server: " + evt.data + "\n";
+            }
+        };
+
+
+        ws.onclose = function () {
+            alert("Connection is closed...");
+        };
+
+        ws.onerror = function (e) {
+            alert(e.msg);
+        }
+    }
+
+    function sendFile() {
+        var file = document.getElementById('filename').files[0];
+        var reader = new FileReader();
+        var rawData = new ArrayBuffer();
+
+        reader.loadend = function () {
+
+        };
+
+        reader.onload = function (e) {
+            rawData = e.target.result;
+            ws.send(rawData);
+        }
+
+        reader.readAsArrayBuffer(file);
+    }
+
+</script>
